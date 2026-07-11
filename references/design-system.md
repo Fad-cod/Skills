@@ -506,13 +506,15 @@ export function CursorFollower() {
   return (
     <div
       ref={cursorRef}
-      className="fixed top-0 left-0 z-[9999] pointer-events-none rounded-full border transition-all duration-150 ease-out"
+      className="fixed top-0 left-0 z-[9999] pointer-events-none rounded-full border"
       style={{
         width: '16px',
         height: '16px',
         borderColor: 'rgba(255, 255, 255, 0.3)',
         backgroundColor: 'rgba(168, 85, 247, 0.08)',
         backdropFilter: 'blur(4px)',
+        transition: 'width 150ms ease-out, height 150ms ease-out, border-color 150ms ease-out',
+        willChange: 'transform',
       }}
     />
   )
