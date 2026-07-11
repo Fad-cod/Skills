@@ -332,6 +332,195 @@ opacity: 0.03;
 </span>
 ```
 
+
+### Tilt 3D (cartes projets)
+
+Effet de rotation 3D qui suit la souris — signature Lovable. Utilise `useMotionValue` + `useSpring` de Framer Motion.
+
+```tsx
+import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { type MouseEvent, useCallback } from 'react'
+
+export function TiltCard({ children }: { children: React.ReactNode }) {
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+
+  const rotateX = useSpring(y, { stiffness: 300, damping: 30 })
+  const rotateY = useSpring(x, { stiffness: 300, damping: 30 })
+
+  const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    const posX = (e.clientX - centerX) / (rect.width / 2)  // -1 à +1
+    const posY = (e.clientY - centerY) / (rect.height / 2) // -1 à +1
+    x.set(posX * 5)   // rotation max 5 degrés
+    y.set(posY * -5)
+  }, [x, y])
+
+  const handleMouseLeave = useCallback(() => {
+    x.set(0)
+    y.set(0)
+  }, [x, y])
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
+      className="transition-shadow duration-300"
+    >
+      {children}
+    </motion.div>
+  )
+}
+```
+
+**Astuce :** Ajouter `className="group"` sur la carte et utiliser `group-hover:` pour des effets supplémentaires (glow, bordure).
+
+---
+
+### Shimmer (barres de progression)
+
+Effet de lumière qui glisse sur la barre de progression — donne une impression de vie/dynamisme.
+
+```css
+/* CSS */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.skill-progress-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s infinite;
+  pointer-events: none;
+}
+```
+
+```tsx
+// Barre de progression dans un composant React
+<div className="relative h-2 rounded-full bg-white/[0.06] overflow-hidden">
+  <motion.div
+    className="relative h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 skill-progress-shimmer"
+    initial={{ width: 0 }}
+    whileInView={{ width: `${level}%` }}
+    viewport={{ once: true }}
+    transition={{ duration: 1, ease: [0.25, 0.1, 0.25, 1] }}
+  />
+</div>
+```
+
+---
+
+### Button shine (boutons primaires)
+
+Overlay brillant qui glisse au survol du bouton.
+
+```css
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 0.5s ease;
+}
+
+.btn-shine:hover::before {
+  left: 125%;
+}
+```
+
+```html
+<button class="btn-shine inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium">
+  Label
+</button>
+```
+
+---
+
+### Curseur personnalisé (cursor follower)
+
+Cercle qui suit la souris et grossit au survol des éléments interactifs.
+
+```tsx
+import { useEffect, useRef } from 'react'
+
+export function CursorFollower() {
+  const cursorRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!cursorRef.current) return
+      cursorRef.current.style.transform = `translate(${e.clientX - 16}px, ${e.clientY - 16}px)`
+    }
+
+    const onHover = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const isInteractive = target.matches(
+        'a, button, input, textarea, [role="button"], label, select'
+      ) || target.closest('a, button, input, textarea, [role="button"], label, select')
+
+      if (!cursorRef.current) return
+      cursorRef.current.style.width = isInteractive ? '48px' : '16px'
+      cursorRef.current.style.height = isInteractive ? '48px' : '16px'
+      cursorRef.current.style.borderColor = isInteractive
+        ? 'rgba(168, 85, 247, 0.5)'
+        : 'rgba(255, 255, 255, 0.3)'
+    }
+
+    // Cacher le curseur natif
+    document.body.style.cursor = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseover', onHover)
+
+    return () => {
+      document.body.style.cursor = ''
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseover', onHover)
+    }
+  }, [])
+
+  return (
+    <div
+      ref={cursorRef}
+      className="fixed top-0 left-0 z-[9999] pointer-events-none rounded-full border transition-all duration-150 ease-out"
+      style={{
+        width: '16px',
+        height: '16px',
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        backgroundColor: 'rgba(168, 85, 247, 0.08)',
+        backdropFilter: 'blur(4px)',
+      }}
+    />
+  )
+}
+```
+
+**Important :** Ajouter ce composant une seule fois dans `App.tsx`, tout en haut du JSX. Le curseur natif sera masqué (`cursor: none`).
+
 ---
 
 ## 8. Navigation
