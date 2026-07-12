@@ -4,43 +4,36 @@ Système de développement haute fidélité pour React/Vite. Design moderne, arc
 
 ## Installation
 
-### Méthode 1 : Via le CLI universel (recommandé)
+### Une seule commande
 
 ```bash
-npx skills add lovable-architect/lovable-architect
+curl -sL https://raw.githubusercontent.com/Fad-cod/Skills/main/install.sh | bash
 ```
 
-Le CLI détecte automatiquement tes agents installés et installe le skill au bon endroit.
+Le script installe le skill dans `~/.agents/skills/lovable-architect/` et crée automatiquement des symlinks pour les agents qui ne supportent pas ce dossier (Claude Code, Windsurf, etc.).
 
-### Méthode 2 : Installation manuelle
+### Agents supportés
 
-```bash
-# Cloner le dépôt
-git clone https://github.com/lovable-architect/lovable-architect.git
-
-# Copier dans le dossier de ton agent (exemple : OpenCode)
-cp -r lovable-architect ~/.config/opencode/skills/lovable-architect
-
-# Ou pour Claude Code
-cp -r lovable-architect ~/.claude/skills/lovable-architect
-
-# Ou pour Gemini CLI
-cp -r lovable-architect ~/.gemini/skills/lovable-architect
-
-# Ou pour le dossier universel
-cp -r lovable-architect ~/.agents/skills/lovable-architect
-```
-
-### Où s'installe le skill ?
-
-| Agent | Dossier projet | Dossier global |
+| Agent | Supporté | Méthode |
 |---|---|---|
-| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
-| OpenCode | `.opencode/skills/` | `~/.config/opencode/skills/` |
-| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
-| Codex CLI | `.agents/skills/` | `~/.codex/skills/` |
-| Cursor | `.agents/skills/` | `~/.cursor/skills/` |
-| **Universel** | `.agents/skills/` | `~/.agents/skills/` |
+| Codex CLI | Natif | `.agents/skills/` |
+| Cursor | Natif | `.agents/skills/` |
+| Gemini CLI | Natif | `.agents/skills/` |
+| OpenCode | Natif | `.agents/skills/` |
+| Cline | Natif | `.agents/skills/` |
+| Copilot | Natif | `.agents/skills/` |
+| Claude Code | Via symlink | `~/.claude/skills/` → symlink |
+| Windsurf | Via symlink | `~/.codeium/windsurf/skills/` → symlink |
+
+### Installation manuelle
+
+```bash
+# Copier le skill dans le dossier universel
+cp -r lovable-architect ~/.agents/skills/lovable-architect
+
+# Pour Claude Code (symlink obligatoire)
+ln -s ~/.agents/skills/lovable-architect ~/.claude/skills/lovable-architect
+```
 
 ## Utilisation
 
