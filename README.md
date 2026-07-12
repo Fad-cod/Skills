@@ -1,53 +1,106 @@
-# 🚀 Lovable Architect Mode (V5) for Gemini CLI
+# Lovable Architect Mode V5
 
-**Lovable Architect Mode** est une "skill" avancée pour [Gemini CLI](https://github.com/google/gemini-cli) qui transforme l'IA en un ingénieur logiciel senior. Inspiré par la rapidité de Lovable.dev, il y ajoute des standards de production : architecture modulaire, tests unitaires (TDD), sécurité backend et mémoire de projet persistante.
+Système de développement haute fidélité pour React/Vite. Design moderne, architecture par features, tests, sécurité backend et animations immersives.
 
-## 🌟 Pourquoi cette Skill ?
+## Installation
 
-Là où la plupart des outils d'IA génèrent du code "plat" et difficile à maintenir, **Lovable Architect Mode** impose une structure rigoureuse de niveau professionnel.
+### Méthode 1 : Via le CLI universel (recommandé)
 
-### Les 4 Piliers :
-1.  **Aesthetics First** : Design système moderne via Tailwind CSS et Shadcn/UI (Pixel Perfect).
-2.  **Feature-Based Architecture** : Organisation du code par domaine métier dans `src/features/[feature-name]`. Chaque dossier feature contient ses composants, hooks et services propres.
-3.  **Test-Driven Development** : Intégration native de Vitest pour chaque composant et logique métier.
-4.  **Persistent Memory** : Protocole `PROJECT.md` permettant à l'IA de se souvenir de l'état du projet et des décisions techniques d'une session à l'autre.
-
-## 🛠️ Outils Inclus
-
-La skill est livrée avec deux moteurs d'automatisation surpuissants :
-
-*   **`setup-lovable-project.sh`** : Initialise une stack complète (Vite + React + TS + Tailwind + Shadcn + Vitest + Prettier + Path Aliases) en moins de 2 minutes.
-*   **`generate-feature.sh`** : Génère instantanément une fonctionnalité complète avec ses dossiers, ses composants UI, son hook personnalisé, son service Supabase (incluant des suggestions de politiques RLS) et ses fichiers de tests.
-
-## 📂 Structure d'une Feature générée
-```text
-src/features/[name]/
-├── components/     # UI components stylisés
-├── hooks/          # Logique métier testée
-├── services/       # Intégration API/Supabase + RLS SQL
-├── index.ts        # Barrel export propre
-└── [name].test.tsx # Tests Vitest pré-configurés
+```bash
+npx skills add lovable-architect/lovable-architect
 ```
 
-## 🚀 Installation
+Le CLI détecte automatiquement tes agents installés et installe le skill au bon endroit.
 
-1. Clone ce dépôt sur ta machine.
-2. Compresse le contenu en fichier `.skill` (ou utilise le dossier directement).
-3. Installe via Gemini CLI :
-   ```bash
-   gemini skills install path/to/lovable-mode.skill --scope user
-   ```
-4. Recharge tes skills :
-   ```bash
-   /skills reload
-   ```
+### Méthode 2 : Installation manuelle
 
-## 📖 Utilisation
+```bash
+# Cloner le dépôt
+git clone https://github.com/lovable-architect/lovable-architect.git
 
-Une fois activée, demande simplement à Gemini :
-*   *"Initialise un nouveau projet Lovable pour une app de e-commerce."*
-*   *"Génère une feature 'cart' avec gestion du panier local."*
-*   *"Ajoute les tests unitaires pour le service d'authentification."*
+# Copier dans le dossier de ton agent (exemple : OpenCode)
+cp -r lovable-architect ~/.config/opencode/skills/lovable-architect
+
+# Ou pour Claude Code
+cp -r lovable-architect ~/.claude/skills/lovable-architect
+
+# Ou pour Gemini CLI
+cp -r lovable-architect ~/.gemini/skills/lovable-architect
+
+# Ou pour le dossier universel
+cp -r lovable-architect ~/.agents/skills/lovable-architect
+```
+
+### Où s'installe le skill ?
+
+| Agent | Dossier projet | Dossier global |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| OpenCode | `.opencode/skills/` | `~/.config/opencode/skills/` |
+| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
+| Codex CLI | `.agents/skills/` | `~/.codex/skills/` |
+| Cursor | `.agents/skills/` | `~/.cursor/skills/` |
+| **Universel** | `.agents/skills/` | `~/.agents/skills/` |
+
+## Utilisation
+
+### Initialiser un projet
+
+Une fois le skill activé, demande à ton assistant :
+
+> *"Initialise un nouveau projet Lovable pour une app de e-commerce."*
+
+L'assistant lancera `scripts/setup-lovable-project.sh` qui installe la stack complète :
+- React + Vite + TypeScript
+- Tailwind CSS v4 + Shadcn/UI
+- Framer Motion + Lenis + Spline 3D
+- Vitest + Testing Library
+- Supabase (auth, DB, RLS)
+- ESLint + Prettier
+
+### Générer une feature
+
+> *"Génère une feature 'auth' avec gestion de la connexion."*
+
+L'assistant lancera `scripts/generate-feature.sh auth` qui crée :
+```
+src/features/auth/
+├── components/AuthPage.tsx
+├── components/AuthPage.test.tsx
+├── hooks/useAuth.ts
+├── hooks/useAuth.test.ts
+├── services/auth.service.ts
+└── index.ts
+```
+
+## Stack technique
+
+```
+React + Vite + TypeScript
+Tailwind CSS v4 + Shadcn/UI
+Framer Motion + Lenis + Spline 3D
+Vitest + Testing Library
+Supabase (auth, DB, RLS)
+ESLint + Prettier
+```
+
+## Documentation
+
+| Fichier | Description |
+|---|---|
+| `SKILL.md` | Définition complète du skill (frontmatter + instructions) |
+| `references/design-system.md` | Design system, palette, composants, animations |
+| `references/typography-guide.md` | 20+ polices Display catégorisées par type de site |
+| `references/animation-recipes.md` | 8 composants React d'animation injectables |
+| `references/animation-decision-matrix.md` | Matrice de décision pour les animations |
+
+## Exemples de prompts
+
+- *"Initialise un projet Lovable pour un SaaS de gestion de projet"*
+- *"Génère une feature 'dashboard' avec graphiques et stats"*
+- *"Ajoute une animation de scroll pour la section hero"*
+- *"Respecte le design system et utilise une police Display category Memphis"*
+- *"Ajoute les tests unitaires pour le service d'authentification"*
 
 ---
-*Développé avec ❤️ pour transformer le prototypage IA en ingénierie de production.*
+*Développé pour transformer le prototypage IA en ingénierie de production.*

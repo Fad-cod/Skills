@@ -41,20 +41,14 @@ interface ${FEATURE_PASCAL}PageProps {
 
 export function ${FEATURE_PASCAL}Page({ className }: ${FEATURE_PASCAL}PageProps) {
   return (
-    <div className={cn("max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12", className)}>
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="tracking-tight font-bold text-slate-900 text-3xl">
-            ${FEATURE_PASCAL}
-          </h1>
-          <p className="leading-relaxed text-slate-600 mt-2">
-            ${FEATURE_PASCAL} feature — à implémenter.
-          </p>
-        </div>
-
-        <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-6">
-          <p className="text-slate-600">Contenu de la feature ${FEATURE_PASCAL}</p>
-        </div>
+    <div className={cn("min-h-screen bg-[#000000] text-slate-200 p-8 flex flex-col items-center justify-center relative overflow-hidden", className)}>
+      <div className="w-full max-w-4xl bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-3xl p-8 shadow-2xl relative z-10 hover:border-white/20 transition-all duration-300">
+        <h1 className="text-4xl font-extrabold tracking-tight text-white mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent font-display">
+          ${FEATURE_PASCAL} Feature
+        </h1>
+        <p className="text-zinc-400 text-lg leading-relaxed mb-6">
+          Composant immersif généré avec succès.
+        </p>
       </div>
     </div>
   )
@@ -144,51 +138,70 @@ EOF
 # 3. SERVICE SUPABASE
 # ────────────────────────────────────────────────────────────
 cat > "$FEATURE_DIR/services/${FEATURE_NAME}.service.ts" <<EOF
-// TODO: Remplacer par le vrai client Supabase
-// import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 export interface ${FEATURE_PASCAL}Item {
   id: string
   created_at: string
-  // TODO: Ajouter les champs de la table Supabase
+  user_id: string
+  // TODO: Ajouter les champs spécifiques à la table ${FEATURE_NAME}
 }
 
 export const ${FEATURE_PASCAL}Service = {
-  /**
-   * Récupère tous les éléments de la table ${FEATURE_NAME}
-   * RLS Policy requise: SELECT pour les utilisateurs authentifiés
-   */
   async getAll(): Promise<${FEATURE_PASCAL}Item[]> {
-    // const { data, error } = await supabase.from('${FEATURE_NAME}').select('*')
-    // if (error) throw new Error(error.message)
-    // return data
-    throw new Error('${FEATURE_PASCAL}Service.getAll() non implémenté')
+    const { data, error } = await supabase
+      .from('${FEATURE_NAME}')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw new Error(error.message)
+    return data ?? []
   },
 
-  /**
-   * Crée un nouvel élément
-   * RLS Policy requise: INSERT pour les utilisateurs authentifiés
-   */
-  async create(payload: Omit<${FEATURE_PASCAL}Item, 'id' | 'created_at'>): Promise<${FEATURE_PASCAL}Item> {
-    // const { data, error } = await supabase.from('${FEATURE_NAME}').insert(payload).select().single()
-    // if (error) throw new Error(error.message)
-    // return data
-    throw new Error('${FEATURE_PASCAL}Service.create() non implémenté')
+  async getById(id: string): Promise<${FEATURE_PASCAL}Item> {
+    const { data, error } = await supabase
+      .from('${FEATURE_NAME}')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (error) throw new Error(error.message)
+    return data
   },
 
-  /**
-   * Supprime un élément par ID
-   * RLS Policy requise: DELETE pour le propriétaire uniquement
-   */
+  async create(payload: Omit<${FEATURE_PASCAL}Item, 'id' | 'created_at' | 'user_id'>): Promise<${FEATURE_PASCAL}Item> {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Non authentifié')
+
+    const { data, error } = await supabase
+      .from('${FEATURE_NAME}')
+      .insert({ ...payload, user_id: user.id })
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  async update(id: string, payload: Partial<Omit<${FEATURE_PASCAL}Item, 'id' | 'created_at' | 'user_id'>>): Promise<${FEATURE_PASCAL}Item> {
+    const { data, error } = await supabase
+      .from('${FEATURE_NAME}')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
   async delete(id: string): Promise<void> {
-    // const { error } = await supabase.from('${FEATURE_NAME}').delete().eq('id', id)
-    // if (error) throw new Error(error.message)
-    throw new Error('${FEATURE_PASCAL}Service.delete() non implémenté')
+    const { error } = await supabase
+      .from('${FEATURE_NAME}')
+      .delete()
+      .eq('id', id)
+    if (error) throw new Error(error.message)
   },
 }
 
 /*
- * ── Supabase RLS Policies suggérées ──────────────────────────
+ * ── Supabase RLS Policies ───────────────────────────────────
  *
  * -- Lecture : utilisateurs authentifiés seulement
  * CREATE POLICY "select_${FEATURE_NAME}" ON ${FEATURE_NAME}
@@ -196,7 +209,11 @@ export const ${FEATURE_PASCAL}Service = {
  *
  * -- Insertion : utilisateurs authentifiés seulement
  * CREATE POLICY "insert_${FEATURE_NAME}" ON ${FEATURE_NAME}
- *   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+ *   FOR INSERT WITH CHECK (auth.uid() = user_id);
+ *
+ * -- Mise à jour : propriétaire uniquement
+ * CREATE POLICY "update_own_${FEATURE_NAME}" ON ${FEATURE_NAME}
+ *   FOR UPDATE USING (auth.uid() = user_id);
  *
  * -- Suppression : propriétaire uniquement
  * CREATE POLICY "delete_own_${FEATURE_NAME}" ON ${FEATURE_NAME}
@@ -248,7 +265,7 @@ echo "🧪 Lance les tests : npm test"
 echo "📋 Checklist PROJECT.md mise à jour"
 echo ""
 echo "Prochaines étapes :"
-echo "  1. Connecte le client Supabase dans src/lib/supabase.ts"
-echo "  2. Implémente ${FEATURE_PASCAL}Service.getAll() / .create() / .delete()"
-echo "  3. Branche use${FEATURE_PASCAL} sur le service"
-echo "  4. Applique les RLS policies dans ton dashboard Supabase"
+echo "  1. Configure ton client Supabase dans src/lib/supabase.ts"
+echo "  2. Ajoute les champs spécifiques à ${FEATURE_PASCAL}Item"
+echo "  3. Applique les RLS policies dans ton dashboard Supabase"
+echo "  4. Lance les tests : npm test"

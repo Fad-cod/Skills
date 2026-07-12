@@ -585,3 +585,495 @@ Avant de valider une feature, vérifier :
 - [ ] **Tags** : Les badges/tags utilisent `bg-purple-500/10 text-purple-300 border-purple-500/20` ?
 - [ ] **Boutons** : Les CTA primaires ont un gradient ? Les secondaires une bordure ?
 - [ ] **Navigation** : Le header a un effet glass au scroll ?
+
+---
+
+## Advanced Motion & Immersion System (Scrollytelling, 3D & Micro-Interactions)
+
+### 1. Smooth Scrolling (Lenis)
+
+Wrapper React global pour un défilement fluide avec inertie, lourdeur physique et interpolation linéaire.
+
+```tsx
+import { ReactNode, useEffect } from 'react'
+import Lenis from 'lenis'
+
+export function SmoothScrollProvider({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      smoothWheel: true,
+    })
+
+    function raf(time: number) {
+      lenis.raf(time)
+      requestAnimationFrame(raf)
+    }
+
+    requestAnimationFrame(raf)
+    return () => lenis.destroy()
+  }, [])
+
+  return <>{children}</>
+}
+```
+
+### 2. Scroll-Triggered Path (Scrollytelling & Route SVG)
+
+Animation de tracé SVG synchronisée avec la progression du scroll (stroke-dashoffset / pathLength).
+
+```tsx
+import { motion, useScroll, useSpring } from 'framer-motion'
+import { useRef } from 'react'
+
+export function ScrollytellingPath() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start center', 'end center'],
+  })
+
+  const pathLength = useSpring(scrollYProgress, { stiffness: 100, damping: 30 })
+
+  return (
+    <div ref={containerRef} className="relative w-full h-[150vh] flex justify-center">
+      <svg className="absolute top-0 w-32 h-full opacity-40" viewBox="0 0 100 1000" fill="none" preserveAspectRatio="none">
+        <motion.path
+          d="M 50 0 Q 100 250 50 500 T 50 1000"
+          stroke="url(#motion-gradient)"
+          strokeWidth="4"
+          style={{ pathLength }}
+        />
+        <defs>
+          <linearGradient id="motion-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#a855f7" />
+            <stop offset="100%" stopColor="#ec4899" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  )
+}
+```
+
+### 3. Pinning & Sticky Scroll Section
+
+Verrouillage de l'écran pendant que les contenus/étapes défilent horizontalement ou en séquence.
+
+```tsx
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { useRef } from 'react'
+
+export function StickyPinnedSection() {
+  const targetRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({ target: targetRef })
+  const x = useTransform(scrollYProgress, [0, 1], ['0%', '-66.6%'])
+
+  return (
+    <section ref={targetRef} className="relative h-[300vh] bg-black">
+      <div className="sticky top-0 flex h-screen items-center overflow-hidden">
+        <motion.div style={{ x }} className="flex gap-12 pl-12">
+          <div className="h-[400px] w-[500px] rounded-3xl bg-white/[0.03] border border-white/10 p-8 backdrop-blur-xl shrink-0">Step 1</div>
+          <div className="h-[400px] w-[500px] rounded-3xl bg-white/[0.03] border border-white/10 p-8 backdrop-blur-xl shrink-0">Step 2</div>
+          <div className="h-[400px] w-[500px] rounded-3xl bg-white/[0.03] border border-white/10 p-8 backdrop-blur-xl shrink-0">Step 3</div>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+```
+
+### 4. Effet Parallaxe au Scroll (Multi-Layer Offset)
+
+Mouvement décalé entre l'arrière-plan et le premier plan pour créer de la profondeur.
+
+```tsx
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { useRef } from 'react'
+
+export function ParallaxLayer({ children, speed = 50 }: { children: React.ReactNode; speed?: number }) {
+  const ref = useRef(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
+  const y = useTransform(scrollYProgress, [0, 1], [-speed, speed])
+
+  return (
+    <div ref={ref} className="relative overflow-hidden">
+      <motion.div style={{ y }}>{children}</motion.div>
+    </div>
+  )
+}
+```
+
+### 5. Zoom-In Portal Effect
+
+Effet de plongée à l'intérieur d'un élément visuel au fil du scroll.
+
+```tsx
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { useRef } from 'react'
+
+export function ZoomPortal({ children }: { children: React.ReactNode }) {
+  const containerRef = useRef(null)
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start start', 'end end'] })
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 15])
+  const opacity = useTransform(scrollYProgress, [0.8, 1], [1, 0])
+
+  return (
+    <div ref={containerRef} className="h-[200vh] relative">
+      <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
+        <motion.div style={{ scale, opacity }} className="w-64 h-64 border-2 border-purple-500 rounded-full flex items-center justify-center">
+          {children}
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+```
+
+### 6. Typographie Dynamique (Kinetic, Text Reveal, Scramble & Variable Font)
+
+Accélération/apparition décalée des mots et effets de texte hacker/scramble au survol.
+
+```tsx
+import { motion } from 'framer-motion'
+import { useState } from 'react'
+
+export function KineticTextReveal({ text }: { text: string }) {
+  const words = text.split(' ')
+
+  return (
+    <motion.h2
+      className="text-4xl font-bold text-white flex flex-wrap gap-2"
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true }}
+      transition={{ staggerChildren: 0.08 }}
+    >
+      {words.map((word, idx) => (
+        <motion.span
+          key={idx}
+          variants={{
+            hidden: { opacity: 0, y: 30, rotateX: -90 },
+            visible: { opacity: 1, y: 0, rotateX: 0 },
+          }}
+          transition={{ type: 'spring', damping: 14 }}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </motion.h2>
+  )
+}
+
+export function TextScrambleHover({ originalText }: { originalText: string }) {
+  const [text, setText] = useState(originalText)
+  const chars = '!@#$%^&*()_+-=[]{}|;:,.<>?'
+
+  const handleMouseEnter = () => {
+    let iteration = 0
+    const interval = setInterval(() => {
+      setText(
+        originalText
+          .split('')
+          .map((_, index) => {
+            if (index < iteration) return originalText[index]
+            return chars[Math.floor(Math.random() * chars.length)]
+          })
+          .join('')
+      )
+      if (iteration >= originalText.length) clearInterval(interval)
+      iteration += 1 / 3
+    }, 30)
+  }
+
+  return (
+    <span onMouseEnter={handleMouseEnter} className="font-mono text-purple-400 cursor-pointer">
+      {text}
+    </span>
+  )
+}
+```
+
+### 7. Curseurs Personnalisés Magnétiques (Custom Cursor & Magnetic Hover)
+
+Curseur suivi par un cercle magnétisé qui attire les boutons au survol.
+
+```tsx
+import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { useRef } from 'react'
+
+export function MagneticButton({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLButtonElement>(null)
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const springX = useSpring(x, { stiffness: 150, damping: 15 })
+  const springY = useSpring(y, { stiffness: 150, damping: 15 })
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!ref.current) return
+    const { left, top, width, height } = ref.current.getBoundingClientRect()
+    x.set((e.clientX - (left + width / 2)) * 0.35)
+    y.set((e.clientY - (top + height / 2)) * 0.35)
+  }
+
+  const handleMouseLeave = () => {
+    x.set(0)
+    y.set(0)
+  }
+
+  return (
+    <motion.button
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ x: springX, y: springY }}
+      className="px-6 py-3 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md"
+    >
+      {children}
+    </motion.button>
+  )
+}
+```
+
+### 8. Bento Grid Interactif & Halo Lumineux (Glassmorphism & Light Follow)
+
+Cartes avec effet de verre dépoli où la lumière de bordure/fond suit la position exacte de la souris.
+
+```tsx
+import { useState } from 'react'
+
+export function InteractiveBentoCard({ title, description }: { title: string; description: string }) {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setMousePosition({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+  }
+
+  return (
+    <div
+      onMouseMove={handleMouseMove}
+      className="relative overflow-hidden rounded-3xl bg-white/[0.03] border border-white/[0.08] p-8 backdrop-blur-xl group hover:border-white/20 transition-all duration-300"
+    >
+      <div
+        className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(168, 85, 247, 0.15), transparent 40%)`,
+        }}
+      />
+      <h3 className="text-2xl font-bold text-white mb-2">{title}</h3>
+      <p className="text-zinc-400 text-sm">{description}</p>
+    </div>
+  )
+}
+```
+
+### 9. Intégration Spline 3D & WebGL Shaders (Canvas Distorsion)
+
+Composants préparés pour recevoir des scènes 3D interactives contrôlées au scroll.
+
+```tsx
+import Spline from '@splinetool/react-spline'
+
+export function Spline3DScene({ sceneUrl }: { sceneUrl: string }) {
+  return (
+    <div className="w-full h-[500px] rounded-3xl overflow-hidden border border-white/10">
+      <Spline scene={sceneUrl} />
+    </div>
+  )
+}
+```
+
+---
+
+## Font Stacks Recommandés
+
+> Consulte le [Typography Guide](typography-guide.md) pour l'analyse complète.
+> **Règle** : Display = police avec PERSONNALITÉ. Inter/DM Sans/Geist/Satoshi = BODY uniquement.
+
+### Par défaut : Grenze (Display) + Inter (Body)
+
+```css
+/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Grenze:wght@400;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap');
+
+@layer base {
+  :root {
+    --font-display: 'Grenze', Georgia, serif;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  h1, h2, h3, h4, .heading {
+    font-family: var(--font-display);
+  }
+}
+```
+
+### Tailwind Config
+
+```js
+// tailwind.config.js
+export default {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Grenze', 'Georgia', 'serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+    },
+  },
+}
+```
+
+### Paires par Catégorie de Site
+
+**Portfolio/Créatif** : Grenze + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Grenze:wght@400;700;900&family=Inter:wght@400;500;600&display=swap');
+--font-display: 'Grenze', Georgia, serif;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**SaaS Landing** : Cal Sans + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Cal+Sans&family=Inter:wght@400;500&display=swap');
+--font-display: 'Cal Sans', sans-serif;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Agency/Studio** : Clash Display + Satoshi
+```css
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,600,700&f[]=satoshi@400,500&display=swap" rel="stylesheet">
+--font-display: 'Clash Display', sans-serif;
+--font-sans: 'Satoshi', sans-serif;
+```
+
+**Food/Lifestyle** : Girassol + DM Sans
+```css
+@import url('https://fonts.googleapis.com/css2?family=Girassol&family=DM+Sans:wght@400;500&display=swap');
+--font-display: 'Girassol', cursive;
+--font-sans: 'DM Sans', system-ui, sans-serif;
+```
+
+**Festival/Événement** : Banger + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Banger&family=Inter:wght@400;500&display=swap');
+--font-display: 'Banger', cursive;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Web3/Crypto** : Clash Display + Satoshi
+```css
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,600,700&f[]=satoshi@400,500&display=swap" rel="stylesheet">
+--font-display: 'Clash Display', sans-serif;
+--font-sans: 'Satoshi', sans-serif;
+```
+
+**Horror/Gaming** : Nosifer + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Nosifer&family=Inter:wght@400;500&display=swap');
+--font-display: 'Nosifer', system-ui;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Kids/Playful** : Henny Penny + DM Sans
+```css
+@import url('https://fonts.googleapis.com/css2?family=Henny+Penny&family=DM+Sans:wght@400;500&display=swap');
+--font-display: 'Henny Penny', system-ui;
+--font-sans: 'DM Sans', system-ui, sans-serif;
+```
+
+**Street/Skate** : Bungee + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Inter:wght@400;500&display=swap');
+--font-display: 'Bungee', sans-serif;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Musique/Metal** : Metal Mania + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Metal+Mania&family=Inter:wght@400;500&display=swap');
+--font-display: 'Metal Mania', cursive;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Data/Dashboard** : Funnel Display + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Funnel+Display:wght@400;700&family=Inter:wght@400;500&display=swap');
+--font-display: 'Funnel Display', sans-serif;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Retro/Neon** : Monoton + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Inter:wght@400;500&display=swap');
+--font-display: 'Monoton', cursive;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Afrofuturiste** : Ojuju + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Ojuju:wght@400;700&family=Inter:wght@400;500&display=swap');
+--font-display: 'Ojuju', sans-serif;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Handmade/Artisanal** : Playpen Sans + DM Sans
+```css
+@import url('https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@400;700&family=DM+Sans:wght@400;500&display=swap');
+--font-display: 'Playpen Sans', cursive;
+--font-sans: 'DM Sans', system-ui, sans-serif;
+```
+
+**Sci-Fi/Futuriste** : Fascinate + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Fascinate&family=Inter:wght@400;500&display=swap');
+--font-display: 'Fascinate', system-ui;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Bold/Poster** : Oi + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Oi&family=Inter:wght@400;500&display=swap');
+--font-display: 'Oi', sans-serif;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Compact/Modular** : Khand + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Khand:wght@400;700&family=Inter:wght@400;500&display=swap');
+--font-display: 'Khand', sans-serif;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Military/Sport** : Black Ops One + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Inter:wght@400;500&display=swap');
+--font-display: 'Black Ops One', system-ui;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Street Food** : Shrikhand + DM Sans
+```css
+@import url('https://fonts.googleapis.com/css2?family=Shrikhand&family=DM+Sans:wght@400;500&display=swap');
+--font-display: 'Shrikhand', cursive;
+--font-sans: 'DM Sans', system-ui, sans-serif;
+```
+
+**Memphis/90s** : Kablammo + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Kablammo&family=Inter:wght@400;500&display=swap');
+--font-display: 'Kablammo', system-ui;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
+
+**Musique/Funk** : Bungee Shade + Inter
+```css
+@import url('https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Inter:wght@400;500&display=swap');
+--font-display: 'Bungee Shade', sans-serif;
+--font-sans: 'Inter', system-ui, sans-serif;
+```
